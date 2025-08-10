@@ -1,15 +1,68 @@
 #include <iostream>
 #include <fstream>
-
-class fileManager{
-    private:
-        const std::string DATA_FILE = "data.txt";
-};
+#include <vector>
 
 enum topCriteria {NEWEST, OLDEST};
 enum returnStatus {OK, ERROR, NOT_FOUND};
 
+class fileManager{
+    private:
+        const std::string DATA_FILE = "data.txt";
+        std::vector<std::string> entries;
+    public:
+        returnStatus readFile(){
+            std::ifstream file(DATA_FILE);
+            std::string line;
+
+            if(!file.is_open()){
+                std::cerr << "Failed to open save file" << std::endl;
+                return ERROR;
+            }
+
+            while(std::getline(file, line, '\n')){
+                entries.push_back(line);
+            }
+
+            file.close();
+            return OK;
+        }
+
+        returnStatus saveFile(){
+            std::ofstream file(DATA_FILE);
+            
+            if(!file.is_open()){
+                std::cerr << "Failed to open save file" << std::endl;
+                return ERROR;
+            }
+
+            for(std::string entry : entries){
+                file << entry << std::endl;
+            }
+
+            file.close();
+            return OK;
+        }
+
+        void append(const std::string &entry){
+            entries.push_back(entry);
+        }
+
+        std::vector<std::string>& getEntries(){
+            return entries;
+        }
+
+        // Constructor & Destructor
+        fileManager(){
+            readFile();
+        }
+        
+        ~fileManager(){};        
+};
+
+
 /* ------------------------------------------------------------------------------------------------------------------- */
+
+
 
 void sendHelp(){
     std::cout << std::endl;
@@ -30,28 +83,60 @@ void sendHelp(){
 void addEntry(fileManager &fm){
     std::string entry;
 
-    std::cout << "ADD Entries" << std::endl;
+    std::cout << "Write Entry: " << std::endl;
     std::getline(std::cin, entry, '\n');
 
-    std::cout << entry << std::endl;
+    //TODO: Add Chrono before pushing entry
+
+    fm.append(entry);
+    fm.saveFile();
 
     return;
 }
 
-
 returnStatus searchEntry(fileManager &fm, std::string keyword){
+    // Using a basic find() function might be a great idea
+    
 
     return OK;
 }
-
 
 returnStatus showEntry(fileManager &fm, topCriteria criteria, std::string top_str){
-    // TODO: TRY and CATCH stoi top_str
+    int top_int;
 
+    try{
+        top_int = std::stoi(top_str);
+    }
+    catch(const std::exception& e){
+        std::cerr << e.what() << '\n';
+        return ERROR;
+    }
+    
+    std::vector<std::string> entries = fm.getEntries();
+    int len = entries.size();
+    if(top_int == -1) top_int = len;
+
+    switch (criteria){
+        case OLDEST:
+            for(int i = 0; i < len && i < top_int; i++){
+                std::cout << entries[i] << std::endl;
+            }
+            break;
+        case NEWEST:
+        {
+            int count = 0;
+            for(int i = len - 1; i >= 0 && count < top_int; i--){
+                std::cout << entries[i] << std::endl;
+                count++;
+            }
+            break; 
+        }
+        default:
+            break;
+    }
+    
     return OK;
-    return ERROR;
 }
-
 
 // argc = argument count
 // argv = argument values
@@ -73,14 +158,14 @@ int main(int argc, char* argv[]){
 
         } else if (command == "SEARCH"){
             if(argc < 3){
-                std::cout << "Missing keyword" << std::endl;
+                std::cerr << "Missing keyword" << std::endl;
                 return 1;
             } else if (argc == 3){
                 std::string keyword = argv[2];
                 
                 return searchEntry(fm, keyword);
             } else {
-                std::cout << "Keyword should only be 1 (one) word";
+                std::cerr << "Keyword should only be 1 (one) word";
                 return 1;
             }
 
@@ -90,8 +175,8 @@ int main(int argc, char* argv[]){
 
             // Basic ./journal SHOW
             if(argc < 3){
-                std::cout << "Showing All Entry" << std::endl;
                 showEntry(fm, criteria, top_str);
+                return 0;
             } 
             
             // ./journal SHOW {NEWEST/OLDEST}
@@ -103,7 +188,7 @@ int main(int argc, char* argv[]){
                 } else if (flag == "OLDEST"){
                     criteria = OLDEST;
                 } else {
-                    std::cout << flag << " is not a valid command" << std::endl;
+                    std::cerr << flag << " is not a valid command" << std::endl;
                     return 1;
                 }
             }
@@ -113,21 +198,25 @@ int main(int argc, char* argv[]){
                 std::string flag = argv[3];
 
                 if(flag != "TOP"){
-                    std::cout << flag << " is not a valid command (1)" << std::endl;
+                    std::cerr << flag << " is not a valid command" << std::endl;
                     return 1;
                 }
 
                 if(argc < 5){
-                    std::cout << "Please include the amount after TOP (see HELP for more info)" << std::endl;
+                    std::cerr << "Please include the amount after TOP (see HELP for more info)" << std::endl;
                     return 1;
                 } else {
                     top_str = argv[4];
+
+                    if(top_str == "-1"){
+                        top_str = "0";
+                    }
                 }
             }
 
             return showEntry(fm, criteria, top_str);
         } else {
-            std::cout << command << " is not a valid command" << std::endl;
+            std::cerr << command << " is not a valid command" << std::endl;
             return 1;
         }
     }
