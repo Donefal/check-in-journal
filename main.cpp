@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 enum topCriteria {NEWEST, OLDEST};
 enum returnStatus {OK, ERROR, NOT_FOUND};
@@ -43,8 +46,25 @@ class fileManager{
             return OK;
         }
 
+        returnStatus resetFile(){
+            std::ofstream file(DATA_FILE);
+
+            if(!file.is_open()){
+                std::cerr << "Failed to open save file" << std::endl;
+                return ERROR;
+            }
+
+            file << "";
+            file.close();
+            return OK;
+        }
+
         void append(const std::string &entry){
             entries.push_back(entry);
+        }
+
+        void pop(){
+            entries.pop_back();
         }
 
         std::vector<std::string>& getEntries(){
@@ -82,22 +102,37 @@ void sendHelp(){
 
 void addEntry(fileManager &fm){
     std::string entry;
+    std::stringstream entryString;
 
     std::cout << "Write Entry: " << std::endl;
     std::getline(std::cin, entry, '\n');
 
-    //TODO: Add Chrono before pushing entry
+    // Handling time
+    auto time = std::chrono::system_clock::now();
+    std::time_t tt = std::chrono::system_clock::to_time_t(time);
+    std::tm tm = *std::localtime(&tt);
+    entryString << "[" << std::put_time(&tm, "%Y-%m-%d") << "] " << entry;
 
-    fm.append(entry);
+    fm.append(entryString.str());
     fm.saveFile();
 
     return;
 }
 
 returnStatus searchEntry(fileManager &fm, std::string keyword){
-    // Using a basic find() function might be a great idea
-    
+    std::vector<std::string> entries = fm.getEntries();
+    std::vector<std::string> validEntries;
 
+    for(std::string entry : entries){
+        if(entry.find(keyword) != std::string::npos){
+            validEntries.push_back(entry);
+        }
+    }
+
+    for(std::string entry : validEntries){
+        std::cout << entry << std::endl;
+    }
+    
     return OK;
 }
 
@@ -138,13 +173,31 @@ returnStatus showEntry(fileManager &fm, topCriteria criteria, std::string top_st
     return OK;
 }
 
+void resetEntry(fileManager &fm){
+    char choice;
+    std::cout << "Are you sure? (y): ";
+    std::cin >> choice;
+
+    if (choice == 'y'){
+        fm.resetFile();
+        std::cout << "File reset succesful" << std::endl;
+    }
+
+    return;
+}
+
+void popEntry(fileManager &fm){
+    fm.pop();
+    fm.saveFile();
+}
+
 // argc = argument count
 // argv = argument values
 int main(int argc, char* argv[]){
     fileManager fm;
 
     if(argc < 2){
-        std::cout << "Usage: ./journal {command}" << std::endl;
+        std::cout << "Usage: ./journal {command} || ";
         std::cout << "(./journal HELP) for the list of command" << std::endl;
 
     } else {
@@ -215,7 +268,13 @@ int main(int argc, char* argv[]){
             }
 
             return showEntry(fm, criteria, top_str);
-        } else {
+        } else if(command == "RESET") {
+            resetEntry(fm);
+
+        } else if (command == "POP"){
+            popEntry(fm);
+
+        }else {
             std::cerr << command << " is not a valid command" << std::endl;
             return 1;
         }
