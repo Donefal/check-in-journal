@@ -1,5 +1,4 @@
 # Check in Journal
----
 ## A very simple CLI Check in Journal Project in C++
 
 This project is a very simple project that can track down what you do on every day basis. Inspired by bullet journal, you can jot down an entry from the CLI with a simple command. The personal puprose of this project is to just start creating programming project once again with a stupidly simple CRUD project that I can do in one or two sit. I believe everyone can also replicate this project, regardless the skill level.
