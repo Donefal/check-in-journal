@@ -92,7 +92,10 @@ void sendHelp(){
     std::cout << "SEARCH {keyword} - search the keyword in all entry" << std::endl;
     std::cout << "SHOW - show every entry" << std::endl;
     std::cout << "SHOW TOP {num} - show top {num} newest entry" << std::endl;
+    std::cout << "SHOW TOP {num} NEWEST - same as SHOW TOP {num}" << std::endl;
     std::cout << "SHOW TOP {num} OLDEST - show top {num} oldest entry" << std::endl;
+    std::cout << "POP - delete the last entry program" << std::endl;
+    std::cout << "RESET - delete every entry on the program" << std::endl;
     std::cout << std::endl;
     std::cout << "For usage: ./journal {command}" << std::endl;
     std::cout << std::endl;
@@ -197,8 +200,7 @@ int main(int argc, char* argv[]){
     fileManager fm;
 
     if(argc < 2){
-        std::cout << "Usage: ./journal {command} || ";
-        std::cout << "(./journal HELP) for the list of command" << std::endl;
+        std::cout << "Usage: ./journal {command} or use (./journal HELP) for the list of command" << std::endl;
 
     } else {
         std::string command = argv[1];
